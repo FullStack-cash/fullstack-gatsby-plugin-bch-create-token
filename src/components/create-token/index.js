@@ -19,7 +19,6 @@ class CreateToken extends Component {
       name: '',
       ticker: '',
       documentURL: '',
-      documentHash: '',
       decimals: 0,
       initialQty: 1,
       mintBaton: null,
@@ -92,13 +91,19 @@ class CreateToken extends Component {
                   </Col>
                   <Col xs={12} >
                     <Text
-                      id='documentHash'
-                      name='documentHash'
-                      value={_this.state.documentHash}
-                      placeholder={`Enter Document Hash`}
-                      label='Document Hash'
+                      id='mspAddr'
+                      name='mspAddr'
+                      value={_this.state.mspAddr}
+                      placeholder={`Enter MSP Address`}
+                      label='MSP Address'
                       labelPosition='above'
                       onChange={_this.handleUpdate}
+                      buttonRight={
+                        <Button
+                          icon='fa-question'
+                          onClick={_this.showMspInfo}
+                        />
+                      }
                     />
                   </Col>
                   <Col xs={12} >
@@ -124,7 +129,7 @@ class CreateToken extends Component {
                       onChange={_this.handleUpdate}
                     />
                   </Col>
-                  {_this.state.errMsg && <Col sm={12} className='text-center'>
+                  {_this.state.errMsg && !_this.state.txid && <Col sm={12} className='text-center'>
                     <p className='err-msg'>{_this.state.errMsg} </p>
 
                   </Col>}
@@ -184,20 +189,20 @@ class CreateToken extends Component {
 
       _this.setState({ inFetch: true, txid: '' })
 
-      const { name, ticker, documentURL, decimals, initialQty, documentHash } = _this.state
+      const { name, ticker, documentURL, decimals, initialQty, mspAddr } = _this.state
+      console.log('msp address', mspAddr)
       _this.validateInputs()
       const tokenData = {
         name,
         ticker,
         documentUrl: documentURL,
-        documentHash,
         decimals,
         initialQty,
         mintBatonVout: null
       }
 
 
-      const { privateKey, cashAddress } = _this.props.walletInfo
+      const { privateKey } = _this.props.walletInfo
       const _SlpMutableData = SlpMutableData.SlpMutableData
 
       const bchjsOptions = _this.getBchjsOptions()
@@ -207,7 +212,7 @@ class CreateToken extends Component {
       const txid = await slpMutableData.create.createToken(
         privateKey,
         tokenData,
-        cashAddress
+        mspAddr
       )
 
       console.log(`New token created with token ID: ${txid}`)
@@ -226,7 +231,7 @@ class CreateToken extends Component {
   }
   validateInputs() {
     try {
-      const { name, ticker, documentURL, initialQty } = _this.state
+      const { name, ticker, documentURL, initialQty, mspAddr } = _this.state
       if (!name) {
         throw new Error('Token Name is required')
       }
@@ -236,6 +241,14 @@ class CreateToken extends Component {
       if (!documentURL) {
         throw new Error('Token DocumentURL is required')
       }
+      if (!mspAddr) {
+        throw new Error('MSP Address is required')
+      }
+
+      if (!mspAddr.match('bitcoincash:')) {
+        throw new Error('MSP Address must be a bch address')
+      }
+
       if (!initialQty) {
         throw new Error('Token Quantity is required')
       }
@@ -263,6 +276,7 @@ class CreateToken extends Component {
           return _this.state[key]
         }
       }
+
       return value
     } catch (error) {
       console.warn(error)
@@ -292,7 +306,7 @@ class CreateToken extends Component {
     try {
       const { walletInfo } = _this.props
 
-      const _interface = walletInfo.interface 
+      const _interface = walletInfo.interface
 
       const jwtToken = walletInfo.JWT
       const restURL = walletInfo.selectedServer
@@ -301,7 +315,7 @@ class CreateToken extends Component {
       if (jwtToken) {
         bchjsOptions.apiToken = jwtToken
       }
-      
+
       if (_interface === 'consumer-api') {
         bchjsOptions.interface = _interface
         bchjsOptions.restURL = restURL
@@ -323,6 +337,13 @@ class CreateToken extends Component {
       console.log(`Using ${bchjsOptions.fee} sats per byte for tx fees.`)
 
       return bchjsOptions
+    } catch (error) {
+      console.warn(error)
+    }
+  }
+  showMspInfo(){
+    try {
+      window.open('https://github.com/Permissionless-Software-Foundation/specifications/blob/master/ps002-slp-mutable-data.md', '__blank')
     } catch (error) {
       console.warn(error)
     }
