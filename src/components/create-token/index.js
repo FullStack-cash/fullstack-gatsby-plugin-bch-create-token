@@ -98,6 +98,12 @@ class CreateToken extends Component {
                       label='MSP Address'
                       labelPosition='above'
                       onChange={_this.handleUpdate}
+                      buttonRight={
+                        <Button
+                          icon='fa-question'
+                          onClick={_this.showMspInfo}
+                        />
+                      }
                     />
                   </Col>
                   <Col xs={12} >
@@ -331,6 +337,13 @@ class CreateToken extends Component {
       console.log(`Using ${bchjsOptions.fee} sats per byte for tx fees.`)
 
       return bchjsOptions
+    } catch (error) {
+      console.warn(error)
+    }
+  }
+  showMspInfo(){
+    try {
+      window.open('https://github.com/Permissionless-Software-Foundation/specifications/blob/master/ps002-slp-mutable-data.md', '__blank')
     } catch (error) {
       console.warn(error)
     }
